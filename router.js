@@ -8,6 +8,7 @@ module.exports = (app) => {
 	router.get('/download/:name', HomeController.downloadParams);
 	router.post('/receiveResult', HomeController.receiveResult);
 	router.get('/down', HomeController.down);
+	router.post('/compute', HomeController.compute);
 
 	app.use(router.routes()); //把router对象的routes挂载到app上不然找不到，使用这个中间件
 }

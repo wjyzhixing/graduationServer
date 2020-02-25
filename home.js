@@ -6,7 +6,7 @@ const readline = require('readline')
 const iconv = require('iconv-lite');
 
 const {
-	exec,
+	execSync,
 	execFile
 } = require('child_process');
 
@@ -15,12 +15,13 @@ let binaryEncoding = 'binary';
 let encoding = 'cp936';
 let cmd = ''
 let res
+let Filename = '';
+let url = '';
 
 module.exports = {
 
 	index: async ctx => { // 设置路由  ctx是request和reponse的结合
-
-		let msg = 'http://localhost:9998/down';
+		let msg;
 		let resultData = '';
 		const FileName = 'SequenceTemp.txt';
 		// const cmdName = 'run.bat';
@@ -31,10 +32,54 @@ module.exports = {
 		'exit' + '"';
 		console.log(cmd);
 
-		await fs.writeFileSync(sequencePath, ctx.request.body.sequence, err => {
-			if (err) {
-				throw err;
-			}
+		await new Promise((resolve,reject) => {
+			fs.writeFileSync(sequencePath, ctx.request.body.sequence, err => {
+				if (err) {
+					throw err;
+				}
+			})	
+			resolve();			
+		})
+
+		msg = 'http://localhost:9998/down';
+
+		await new Promise((resolve,reject) => {
+			execSync(cmd, {
+				encoding: binaryEncoding
+			}, (error, stdout) => {
+				// console.log('stdout1', iconv.decode(new Buffer.from(stdout, binaryEncoding), encoding));
+				
+				// 读取结果
+				readFileToArr = (fReadName,callback) => {
+				    let fRead = fs.createReadStream(fReadName);
+				    let objReadline = readline.createInterface({
+				        input:fRead
+				    });
+				    let arr = new Array();
+					objReadline.on('line' , (line) => {
+			        arr.push(line);
+				        //console.log('line:'+ line);
+				    });
+				    objReadline.on('close' , () => {
+				       // console.log(arr);
+				        callback(arr);
+				    });
+				}
+			
+				resultData = readFileToArr('Test/Results/Results.txt' , (data) => {
+				// a = 2
+					// console.log(data)
+					resultData = data;
+					console.log(resultData)
+					return resultData;
+					// console.log(typeof(data))
+				})
+				
+				// console.log(resultData)
+				// console.log(a)
+				console.log(ctx.request.body)
+			});
+			resolve();
 		})
 
 		/*
@@ -45,44 +90,6 @@ module.exports = {
 			})
 			console.log(cmd);
 		*/
-
-		await exec(cmd, {
-			encoding: binaryEncoding
-		}, (error, stdout) => {
-			res = 12;
-			// console.log('stdout1', iconv.decode(new Buffer.from(stdout, binaryEncoding), encoding));
-			
-			// 读取结果
-			readFileToArr = (fReadName,callback) => {
-			    let fRead = fs.createReadStream(fReadName);
-			    let objReadline = readline.createInterface({
-			        input:fRead
-			    });
-			    let arr = new Array();
-			    objReadline.on('line' , (line) => {
-			        arr.push(line);
-			        //console.log('line:'+ line);
-			    });
-			    objReadline.on('close' , () => {
-			       // console.log(arr);
-			        callback(arr);
-			    });
-			}
-		
-			a = 2
-			resultData = readFileToArr('Test/Results/Results.txt' , (data) => {
-				// console.log(data)
-				resultData = data;
-				console.log(resultData)
-				return resultData;
-				// console.log(typeof(data))
-			})
-			
-			console.log(resultData)
-			console.log(a)
-			console.log(ctx.request.body)
-		});
-
 
 		/*
 			execFile("./public/cmd/run.bat",null,function(error,stdout,stderr){
@@ -99,7 +106,7 @@ module.exports = {
 		return ctx.body = { // 响应到页面中的数据 ctx.body代表报文的主体
 			token: 'abc', // 通过axios会直接把body中的内容返回
 			msg: msg,
-			std: '正在预测,请稍后......'
+			std: '预测完成',
 		};
 	},
 
@@ -110,7 +117,7 @@ module.exports = {
 		// 修改文件的名称
 		const myDate = new Date();
 		// var newFilename = myDate.getTime()+'.'+file.name.split('.')[1];
-		const Filename = ctx.request.files.file.name;
+		Filename = ctx.request.files.file.name;
 		const FileChange = 'SequenceTemp.txt';
 		// console.log(ctx.request.files.file.name)
 		const targetPath = path.join(__dirname, './public/sequences/') + `/${FileChange}`;
@@ -118,50 +125,8 @@ module.exports = {
 		const upStream = fs.createWriteStream(targetPath);
 		// // 可读流通过管道写入可写流
 		reader.pipe(upStream);
+		
 		const url = 'http://' + ctx.headers.host + '/uploads/' + FileChange;
-		
-		cmd = 'start \"\" cmd /k \"' + 'cd Test' + ' && ' +
-		'python CNN_Testing.py --inputFile ../public/sequences/' + FileChange + ' --inputModel Model.h5 --Shuffle true' + ' && ' + 
-		'exit' + '"';
-		console.log(cmd);
-	
-		await exec(cmd, {
-			encoding: binaryEncoding
-		}, (error, stdout) => {
-			res = 12;
-			// console.log('stdout1', iconv.decode(new Buffer.from(stdout, binaryEncoding), encoding));
-			
-			// 读取结果
-			readFileToArr = (fReadName,callback) => {
-			    let fRead = fs.createReadStream(fReadName);
-			    let objReadline = readline.createInterface({
-			        input:fRead
-			    });
-			    let arr = new Array();
-			    objReadline.on('line' , (line) => {
-			        arr.push(line);
-			        //console.log('line:'+ line);
-			    });
-			    objReadline.on('close' , () => {
-			       // console.log(arr);
-			        callback(arr);
-			    });
-			}
-		
-			a = 2
-			resultData = readFileToArr('Test/Results/Results.txt' , (data) => {
-				// console.log(data)
-				resultData = data;
-				console.log(resultData)
-				return resultData;
-				// console.log(typeof(data))
-			})
-			
-			console.log(resultData)
-			console.log(a)
-			console.log(ctx.request.body)
-		});
-
 		
 		//返回保存的路径
 		return ctx.body = {
@@ -170,7 +135,7 @@ module.exports = {
 			data: {
 				url: url
 			},
-			msg: '上传成功'
+			msg: '上传完成'
 		};
 	},
 
@@ -205,5 +170,59 @@ module.exports = {
 		const path = `./Test/Results/Results.txt`;
 		ctx.attachment(path);
 		await sendfile(ctx, path);
+	},
+	
+	compute: async ctx => {
+		const FileChange = 'SequenceTemp.txt';
+		cmd = 'start \"\" cmd /k \"' + 'cd Test' + ' && ' +
+		'python CNN_Testing.py --inputFile ../public/sequences/' + FileChange + ' --inputModel Model.h5 --Shuffle true' + ' && ' + 
+		'exit' + '"';
+		console.log(cmd);
+			
+		execSync(cmd, {
+			encoding: binaryEncoding
+		}, (error, stdout) => {
+			res = 12;
+			// console.log('stdout1', iconv.decode(new Buffer.from(stdout, binaryEncoding), encoding));
+			
+			// 读取结果
+			readFileToArr = (fReadName,callback) => {
+			    let fRead = fs.createReadStream(fReadName);
+			    let objReadline = readline.createInterface({
+			        input:fRead
+			    });
+			    let arr = new Array();
+			    objReadline.on('line' , (line) => {
+			        arr.push(line);
+			        //console.log('line:'+ line);
+			    });
+			    objReadline.on('close' , () => {
+			       // console.log(arr);
+			        callback(arr);
+			    });
+			}
+		
+			a = 2
+			resultData = readFileToArr('Test/Results/Results.txt' , (data) => {
+				// console.log(data)
+				resultData = data;
+				console.log(resultData)
+				return resultData;
+				// console.log(typeof(data))
+			})
+			
+			console.log(resultData)
+			console.log(a)
+			console.log(ctx.request.body)
+		});
+
+
+		
+		//返回保存的路径
+		return ctx.body = {
+			code: 200,
+			name: Filename,
+			msg: '计算完成'
+		};		
 	}
 }

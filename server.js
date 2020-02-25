@@ -7,6 +7,8 @@ const Router = require('./router')
 
 app.use(cors())
 
+app.use(require('koa-static')(__dirname + '/public/dist'))
+
 app.use(koaBody({
 	multipart: true,
 	formidable: {
