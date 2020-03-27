@@ -3,6 +3,9 @@ let app = new Koa(); // 实例化
 const cors = require('koa-cors'); // 跨域
 const koaBody = require('koa-body'); // 解析request
 
+let mongoose = require('./config/mongoose.js');
+let db = mongoose();
+
 const Router = require('./router')
 
 app.use(cors())

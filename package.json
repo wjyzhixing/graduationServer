@@ -11,5 +11,8 @@
   "dependencies": {
     "koa-router": "^7.4.0",
     "koa2": "^2.0.0-alpha.7"
+  },
+  "devDependencies": {
+    "mongoose": "^5.9.6"
   }
 }

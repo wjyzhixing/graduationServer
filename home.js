@@ -5,6 +5,9 @@ const readline = require('readline')
 
 const iconv = require('iconv-lite');
 
+let mongoose = require('mongoose');
+let User = mongoose.model('User');
+
 const {
 	execSync,
 	execFile
@@ -158,7 +161,36 @@ module.exports = {
 		const name = 'Test/Results/Results.txt';
 		console.log(fs.readFileSync(name,'utf-8'))
 		const result = fs.readFileSync(name,'utf-8')
+		let temp = result.split("\n");
+		let [res,Sequence,percent,exist] = [[],[],[],[]];
+		for (let i = 0; i < temp.length - 1; i++) {
+			// console.log(temp[0].split('\' \''))
+			let re = temp[i].split('\' \'')
+			// console.log(re)
+			// console.log(re[0].slice(2,))
+			// console.log(re[2].slice(0,-3))
+			res.push({
+				Sequence: re[0].slice(2, ),
+				percent: re[1],
+				exist: re[2].slice(0, -3)
+			})
+		}
+		console.log(res[0]);
+		for(let i = 0;i<res.length;i++){
+			let user = new User(res[i]);
+			console.log(user.Sequence)
+			User.findOne({'Sequence':user.Sequence},function(err,userAdd){
+				if(err){
+					console.log(err);
+				}
+				else{
+					if(userAdd == null){
+						user.save();
+					}
+				}
+			})
 		
+		}
 		return ctx.body = {
 			code: 200,
 			name: name,
